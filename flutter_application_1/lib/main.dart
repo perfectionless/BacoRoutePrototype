@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Jeepney Route Finder',
+      title: 'Baco-Route',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -31,15 +31,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<String> _allRoutes = [
     'Route 12: Ayala to SM City',
-    'Route 15: Market to Campus',
-    'Route 20: Park to Terminal',
+    'Route 15: X to Y',
+    'Route 20: Y to Z',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Jeepney Route Finder'),
+        title: Text('Baco-Route'),
         actions: [
           IconButton(
             icon: Icon(Icons.settings),
@@ -97,9 +97,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Expandable Menu
           DraggableScrollableSheet(
-            initialChildSize: 0.3,
-            minChildSize: 0.3,
-            maxChildSize: 0.7,
+            initialChildSize: 0.1,
+            minChildSize: 0.1,
+            maxChildSize: 0.9,
+            snapSizes: [.1, .25],
             builder: (context, scrollController) {
               return Container(
                 decoration: BoxDecoration(
@@ -174,6 +175,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Text('Find Routes'),
                       ),
                     ),
+
+                    Positioned(
+                      top: 0,
+                      child: const Row(
+                      children: <Widget>[
+                        FlutterLogo(),
+                        Text("Flutter's hot reload helps you quickly and easily experiment, build UIs, add features, and fix bug faster. Experience sub-second reload times, without losing state, on emulators, simulators, and hardware for iOS and Android."),
+                        Icon(Icons.sentiment_very_satisfied),
+                      ],
+                    )
+                    )
                   ],
                 ),
               );
