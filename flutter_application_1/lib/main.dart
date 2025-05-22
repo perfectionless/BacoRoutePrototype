@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -38,25 +40,22 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showStops = true;
   List<String> _selectedRoutes = [];
 
-  // Bacolod City coordinates
   final LatLng _bacolodCityCenter = LatLng(10.6713, 122.9511);
 
-  // Map bounds for Bacolod City area
   final LatLngBounds _bacolodCityBounds = LatLngBounds(
-    LatLng(10.6200, 122.9000),  // Southwest corner
-    LatLng(10.7200, 123.0000),  // Northeast corner
+    LatLng(10.6200, 122.9000),
+    LatLng(10.7200, 123.0000),
   );
 
-  // Sample route data - this would come from your database in the real app
   final List<RouteData> _allRoutes = [
     RouteData(
       id: 1,
       name: 'Banago-Libertad Loop',
       color: Colors.red,
       points: [
-        LatLng(10.6713, 122.9511),  // Bacolod City center
-        LatLng(10.6800, 122.9600),  // Adjust these coordinates
-        LatLng(10.6850, 122.9650),  // to match actual routes
+        LatLng(10.6713, 122.9511), 
+        LatLng(10.6800, 122.9600), 
+        LatLng(10.6850, 122.9650), 
       ],
       stops: [
         StopData(name: 'Banago Terminal', location: LatLng(10.6713, 122.9511)),
@@ -93,9 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  // List of all terminals/stops
   List<StopData> get _allStops {
-    // Extract all unique stops from routes
     final allStops = <StopData>[];
     for (final route in _allRoutes) {
       for (final stop in route.stops) {
@@ -108,6 +105,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _initializeRoutes();
+  }
+
+  Future<void> _initializeRoutes() async {
+    for (final route in _allRoutes) {
+      await route.fetchRoutePoints();
+    }
+    setState(() {}); // Refresh display with new route points
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -116,34 +126,29 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // Add settings functionality here
+        
             },
           ),
         ],
       ),
       body: Stack(
         children: [
-          // Map View
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: _bacolodCityCenter,  // Center on Bacolod City
-              initialZoom: 14.0,  // Closer zoom level
-              minZoom: 12.0,  // Minimum zoom level
-              maxZoom: 18.0,  // Maximum zoom level
-              // Optional: Restrict map panning to Bacolod City bounds
-              // cameraConstraint: CameraConstraint.contain(_bacolodCityBounds),
+              initialCenter: _bacolodCityCenter,
+              initialZoom: 14.0,
+              minZoom: 12.0,
+              maxZoom: 18.0,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
               ),
-              // Draw polylines for selected routes
               PolylineLayer(
                 polylines: _getSelectedRoutePolylines(),
               ),
-              // Show stops/terminals if enabled
               if (_showStops)
                 MarkerLayer(
                   markers: _getVisibleMarkers(),
@@ -151,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
 
-          // Expandable Menu
           DraggableScrollableSheet(
             initialChildSize: 0.3,
             minChildSize: 0.1,
@@ -172,10 +176,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Handle indicator
                     GestureDetector(
-                      onVerticalDragUpdate: (_) {}, // This creates a gesture recognizer area
-                      behavior: HitTestBehavior.opaque, // Makes the entire area respond to gestures
+                      onVerticalDragUpdate: (_) {},
+                      behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         width: double.infinity,
@@ -193,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Expanded(
                       child: SingleChildScrollView(
-                        controller: scrollController,  // Important: Pass the controller here
+                        controller: scrollController,
                         child: _buildCurrentView(scrollController),
                       ),
                     ),
@@ -223,7 +226,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Build the appropriate view based on selected tab
   Widget _buildCurrentView(ScrollController scrollController) {
     switch (_currentIndex) {
       case 0:
@@ -237,11 +239,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Routes tab content
   Widget _buildRoutesView() {
     return Column(
       children: [
-        // Header
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
                 ),
               ),
-              // Select All button
+
               ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -266,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Text('Select All'),
               ),
               const SizedBox(width: 8),
-              // Clear button
+
               ElevatedButton(
                 onPressed: () {
                   setState(() {
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         
-        // Search bar
+
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: TextField(
@@ -297,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
             ),
             onChanged: (value) {
-              // Implement search functionality
+
             },
           ),
         ),
@@ -624,7 +624,7 @@ class RouteData {
   final int id;
   final String name;
   final Color color;
-  final List<LatLng> points;
+  List<LatLng> points;
   final List<StopData> stops;
   
   RouteData({
@@ -634,6 +634,21 @@ class RouteData {
     required this.points,
     required this.stops,
   });
+
+  Future<void> fetchRoutePoints() async {
+    List<LatLng> routePoints = [];
+    
+    // Get route segments between consecutive stops
+    for (int i = 0; i < stops.length - 1; i++) {
+      final pointsList = await RouteService.getRoutePoints(
+        stops[i].location,
+        stops[i + 1].location
+      );
+      routePoints.addAll(pointsList);
+    }
+    
+    points = routePoints;
+  }
 }
 
 class StopData {
@@ -644,4 +659,31 @@ class StopData {
     required this.name,
     required this.location,
   });
+}
+
+class RouteService {
+  static Future<List<LatLng>> getRoutePoints(LatLng start, LatLng end) async {
+    final String baseUrl = 'router.project-osrm.org';
+    final uri = Uri.http(baseUrl, '/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}', {
+      'overview': 'full',
+      'geometries': 'geojson',
+    });
+
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final coordinates = data['routes'][0]['geometry']['coordinates'] as List;
+        
+        return coordinates.map((point) {
+          return LatLng(point[1], point[0]); // Note: OSRM returns [lng, lat]
+        }).toList();
+      }
+    } catch (e) {
+      print('Error fetching route: $e');
+    }
+    
+    // Fallback to direct line if routing fails
+    return [start, end];
+  }
 }
